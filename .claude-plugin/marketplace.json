@@ -1,0 +1,17 @@
+{
+  "$schema": "https://code.claude.com/schemas/marketplace.json",
+  "name": "scoped-commit",
+  "description": "Commit only the feature's files, never your local tweaks.",
+  "owner": { "name": "Abdul Aziz", "url": "https://github.com/codemeall" },
+  "plugins": [
+    {
+      "name": "scoped-commit",
+      "source": "./",
+      "description": "Paste-able git commands that commit only the files or hunks a feature changed, leaving your local tweaks (staged or unstaged) untouched.",
+      "version": "1.0.0",
+      "author": { "name": "Abdul Aziz", "url": "https://github.com/codemeall" },
+      "repository": "https://github.com/codemeall/scoped-commit",
+      "license": "MIT"
+    }
+  ]
+}
