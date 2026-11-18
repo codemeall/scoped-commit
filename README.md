@@ -10,12 +10,18 @@ An [Agent Skill](https://agentskills.io) for AI coding agents (Claude Code, Code
 
 ## Install
 
-Any agent that supports Agent Skills:
+Pick the folder you want the skill in, and pass `-a` so it goes there and nowhere else.
 
-```sh
-npx skills add codemeall/scoped-commit                          # asks which agents and where
-npx skills add codemeall/scoped-commit -g -a claude-code -y     # Claude Code, all projects, no prompts
-```
+| Where it goes | Read by | Command |
+|---|---|---|
+| `.claude/skills/` in this repo | Claude Code | `npx skills add codemeall/scoped-commit -a claude-code -y` |
+| `~/.claude/skills/`, all projects | Claude Code | `npx skills add codemeall/scoped-commit -a claude-code -g -y` |
+| `.agents/skills/` in this repo | Codex, Cursor, Gemini CLI, Copilot and other Agent Skills clients | `npx skills add codemeall/scoped-commit -a universal -y` |
+| `~/.agents/skills/`, all projects | the same agents | `npx skills add codemeall/scoped-commit -a universal -g -y` |
+
+For both folders, pass both names: `-a claude-code universal`.
+
+Always pass `-a`. Without it, the installer reuses the agents you picked last time, or else every agent whose home folder it finds, and the skill can land in folders like `.adal/skills/`. If that already happened, run `npx skills remove scoped-commit`, then one of the commands above.
 
 Update later with `npx skills update scoped-commit`.
 
@@ -66,31 +72,32 @@ M  package.json                   # staged local tweak
 
 You type `/scoped-commit`. The agent replies:
 
-> Safe to commit. `config.ts` mixes the fix with your local URL, so only the fix lines go in.
+> Safe to commit on `main`. `config.ts` mixes the fix with your local URL, so only the fix lines go in. The patch `/tmp/scoped-commit-shop.patch` holds line 12 of `config.ts` only.
 >
 > ```sh
-> cd ~/code/shop
->
-> # feature patch (made by the agent): /tmp/scoped-commit-feature.patch, line 12 of config.ts only
-> T=$(mktemp)
-> GIT_INDEX_FILE=$T git read-tree HEAD
-> GIT_INDEX_FILE=$T git apply --cached --unidiff-zero /tmp/scoped-commit-feature.patch
-> GIT_INDEX_FILE=$T git add -- src/billing/invoice.ts src/billing/invoice.test.ts
-> GIT_INDEX_FILE=$T git diff --cached --stat HEAD     # expect 3 files
->
-> GIT_INDEX_FILE=$T git commit -F - <<'MSG'
+> cd ~/code/shop &&
+> T=$(mktemp) &&
+> GIT_INDEX_FILE="$T" git read-tree HEAD &&
+> GIT_INDEX_FILE="$T" git apply --cached --unidiff-zero /tmp/scoped-commit-shop.patch &&
+> GIT_INDEX_FILE="$T" git add -- src/billing/invoice.ts src/billing/invoice.test.ts &&
+> GIT_INDEX_FILE="$T" git diff --cached --stat HEAD &&
+> GIT_INDEX_FILE="$T" git commit -F - <<'MSG' && git reset -q -- src/billing/invoice.ts src/billing/invoice.test.ts src/billing/config.ts
 > fix(billing): round invoice totals per line, not per invoice
 >
 > Totals were rounded once at the end, so multi-line invoices could be
 > off by a cent against the line items. Adds a regression test.
 > MSG
 > rm -f "$T"
-> git reset -q -- src/billing/invoice.ts src/billing/invoice.test.ts src/billing/config.ts
->
-> git show --stat --oneline HEAD     # expect: invoice.ts, invoice.test.ts, config.ts
-> git status --short                 # expect: M .vscode/settings.json, M package.json,
->                                    #         M .env.local, M config.ts (local URL)
 > ```
+>
+> Check it:
+>
+> ```sh
+> git show --stat --oneline HEAD
+> git status --short
+> ```
+>
+> The commit should list 3 files: `invoice.ts`, `invoice.test.ts`, `config.ts`. The status should still show `M  .vscode/settings.json`, `M  package.json`, ` M .env.local` and ` M src/billing/config.ts` (your local URL).
 >
 > Then, if the check matched: `git push`
 >
@@ -99,10 +106,13 @@ You type `/scoped-commit`. The agent replies:
 >
 > Commit with these commands only. A plain `git commit`, `git commit -a`, or your editor's Commit button would also commit your staged local files.
 
+The command blocks have no `#` comments and are chained with `&&` on purpose. zsh, the default macOS shell, does not treat `#` as a comment in pasted input, and the chain stops the block at the first failed step, before anything is committed.
+
 When no file is mixed, which is the usual case, the commands are shorter:
 
 ```sh
-git add -- src/billing/invoice.test.ts           # new files only
+cd ~/code/shop &&
+git add -- src/billing/invoice.test.ts &&
 git commit -F - -- src/billing/invoice.ts src/billing/invoice.test.ts <<'MSG'
 fix(billing): round invoice totals per line, not per invoice
 MSG
