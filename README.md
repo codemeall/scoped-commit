@@ -23,7 +23,7 @@ For both folders, pass both names: `-a claude-code universal`.
 
 Always pass `-a`. Without it, the installer reuses the agents you picked last time, or else every agent whose home folder it finds, and the skill can land in folders like `.adal/skills/`. If that already happened, run `npx skills remove scoped-commit`, then one of the commands above.
 
-Update later with `npx skills update scoped-commit`.
+To update, run the same command again. Avoid `npx skills update`: it takes no `-a`, and re-links the skill into every agent folder it detects on your machine.
 
 Claude Code, as a plugin:
 
